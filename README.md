@@ -108,6 +108,13 @@ Useful endpoints:
 make verify
 ```
 
+## Hosted Deployment
+
+- Live URL: [https://ranking-serving-engine.onrender.com](https://ranking-serving-engine.onrender.com)
+- First path to click: `/queries`, then `/rank/query_0049?k=5`
+- Browser smoke: passed on `/rank/query_0049?k=5`; direct HTTP to `/queries` and `/rank/query_0049?k=5` returned `200`
+- Render config: Git-backed Python web service on `main`, `buildCommand=python3 -m pip install -r requirements.txt`, `startCommand=uvicorn app.main:app --host 0.0.0.0 --port $PORT`, `healthCheckPath=/health`, `plan=free`, `region=oregon`, auto-deploy enabled
+
 ## Validation
 
 The V1 repo currently verifies:
