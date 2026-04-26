@@ -127,7 +127,7 @@ The V1 repo currently verifies:
 - top-k serving for known queries using the stored artifact package
 - a freshness-aware serving constraint can promote fresher candidates into top-k when the base scorer over-concentrates on stale results
 
-Evaluation is purpose-built for a hiring review:
+The evaluation surface is intentionally inspectable:
 
 - NDCG@5 shows whether the top of the list is ordered correctly.
 - MAP@5 shows whether relevant items are surfaced early and consistently.
@@ -165,9 +165,9 @@ The V1 repo demonstrates:
 - explicit train/evaluate/serve separation so API behavior is reproducible
 - freshness-aware reranking constraints at serve time without retraining the model
 
-## Next Steps
+## Future Expansion
 
-Realistic follow-up work for the next milestone:
+Possible follow-on work outside the current shipped scope:
 
 1. replace synthetic labels with logged-click or impression-style training data
 2. add a lightweight cache or feature-store layer for serving features
