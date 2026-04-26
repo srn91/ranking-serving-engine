@@ -1,6 +1,6 @@
 # ranking-serving-engine
 
-A local-first ranking system that generates query-item candidates, trains a feature-based scorer, evaluates relevance quality with ranking metrics, and serves top-k results through a low-latency API.
+A local-first ranking system that generates query-item candidates, trains a feature-based scorer, evaluates relevance quality with ranking metrics, and serves top-k results through a FastAPI endpoint.
 
 ## Problem
 
@@ -55,7 +55,7 @@ ranking-serving-engine/
 ### Install Dependencies
 
 ```bash
-git clone git@github.com:srn91/ranking-serving-engine.git
+git clone https://github.com/srn91/ranking-serving-engine.git
 cd ranking-serving-engine
 python3 -m pip install -r requirements.txt
 ```
