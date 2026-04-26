@@ -100,7 +100,7 @@ Useful endpoints:
 
 - `http://127.0.0.1:8002/health`
 - `http://127.0.0.1:8002/queries`
-- `http://127.0.0.1:8002/rank/query_0001?k=5`
+- `http://127.0.0.1:8002/rank/query_0049?k=5`
 
 ### Run the Full Quality Gate
 
