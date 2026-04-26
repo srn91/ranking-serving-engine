@@ -16,6 +16,18 @@ The V1 implementation keeps the stack laptop-runnable while still reflecting a r
 - offline evaluation computes NDCG@5 and MAP@5 on held-out queries
 - a serving layer loads trained artifacts and returns top-k ranked items for a query
 
+## Pipeline Walkthrough
+
+The ranking path is split so the offline and online stories stay easy to reason about:
+
+1. `app/dataset.py` generates query-grouped candidates and labels.
+2. `app/training.py` fits the rank scorer and writes the artifact bundle.
+3. `app/evaluation.py` computes grouped ranking metrics from the saved predictions.
+4. `app/service.py` loads the registered model and ranks query items without retraining.
+5. `app/main.py` serves the health, query index, and `/rank/{query_id}` endpoints.
+
+The serving layer is intentionally artifact-backed and retraining-free. That keeps the request path predictable and makes it obvious where to add explicit latency instrumentation or caching later, rather than hiding those concerns inside the model code.
+
 ```mermaid
 flowchart LR
     A["Synthetic query-item candidates"] --> B["Feature pipeline"]
@@ -104,6 +116,17 @@ The V1 repo currently verifies:
 - artifact-backed training and serving with no hidden retraining in the API
 - offline NDCG@5 and MAP@5 computation on held-out queries
 - top-k serving for known queries using the stored artifact package
+
+Evaluation is purpose-built for a hiring review:
+
+- NDCG@5 shows whether the top of the list is ordered correctly.
+- MAP@5 shows whether relevant items are surfaced early and consistently.
+- The `/rank/{query_id}` response includes the item score plus feature context so the ranking decision can be inspected instead of treated as a black box.
+
+Operational target:
+
+- keep the request path artifact-backed, in-process, and free of retraining
+- add explicit P50/P99 telemetry if you want to present published latency SLOs later
 
 Current expected evaluation snapshot:
 
