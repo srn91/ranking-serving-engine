@@ -129,7 +129,7 @@ make verify
 
 ## Validation
 
-The V1 repo currently verifies:
+The repo currently verifies:
 
 - deterministic generation of grouped ranking candidates
 - artifact-backed training and serving with no hidden retraining in the API
