@@ -23,7 +23,12 @@ app = FastAPI(
 
 @app.get("/health")
 def health() -> dict[str, object]:
-    return {"status": "ok", "metrics": load_metrics()}
+    metadata = load_metrics()
+    return {
+        "status": "ok",
+        "experiment": metadata["experiment"],
+        "selected_model": metadata["selected_model"],
+    }
 
 
 @app.get("/queries")

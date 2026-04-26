@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.config import METADATA_PATH, REPORT_JSON_PATH, REPORT_MD_PATH
 from app.dataset import generate_dataset
 from app.evaluation import grouped_predictions, map_at_k, ndcg_at_k
 from app.service import apply_freshness_guard
@@ -7,11 +8,18 @@ from app.training import train_and_package
 
 
 def test_training_metrics_clear_quality_bar() -> None:
-    metrics = train_and_package()
+    results = train_and_package()
 
-    assert metrics["queries_evaluated"] == 12
-    assert metrics["ndcg_at_5"] >= 0.93
-    assert metrics["map_at_5"] >= 0.88
+    assert results["experiment"]["experiment_id"] == "ranking-experiment-v1"
+    assert results["experiment"]["selection_rule"] == "higher ndcg_at_5, then map_at_5"
+    assert results["selected_model"] in {"gradient_boosting_baseline", "random_forest_challenger"}
+    assert len(results["experiment"]["models"]) == 2
+    assert results["experiment"]["selected_model"]["model_name"] == results["selected_model"]
+    assert METADATA_PATH.exists()
+    assert REPORT_JSON_PATH.exists()
+    assert REPORT_MD_PATH.exists()
+    assert results["experiment"]["selected_model"]["ndcg_at_5"] >= 0.93
+    assert results["experiment"]["selected_model"]["map_at_5"] >= 0.88
 
 
 def test_metric_helpers_rank_relevant_results_highly() -> None:

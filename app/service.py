@@ -4,14 +4,18 @@ import json
 
 import joblib
 
-from app.config import DATASET_PATH, METADATA_PATH, MODEL_PATH
+from app.config import DATASET_PATH, METADATA_PATH, MODEL_PATH, REPORT_JSON_PATH, REPORT_MD_PATH
 
 FRESHNESS_THRESHOLD = 0.72
 MIN_FRESH_RESULTS = 2
 
 
 def ensure_artifacts_exist() -> None:
-    missing = [path for path in (MODEL_PATH, DATASET_PATH, METADATA_PATH) if not path.exists()]
+    missing = [
+        path
+        for path in (MODEL_PATH, DATASET_PATH, METADATA_PATH, REPORT_JSON_PATH, REPORT_MD_PATH)
+        if not path.exists()
+    ]
     if missing:
         formatted = ", ".join(str(path.name) for path in missing)
         raise FileNotFoundError(f"missing ranking artifacts: {formatted}. Run `make train` first.")
@@ -25,7 +29,7 @@ def load_validation_rows() -> list[dict[str, object]]:
 
 def load_metrics() -> dict[str, object]:
     ensure_artifacts_exist()
-    return json.loads(METADATA_PATH.read_text(encoding="utf-8"))["metrics"]
+    return json.loads(METADATA_PATH.read_text(encoding="utf-8"))
 
 
 def apply_freshness_guard(
@@ -122,6 +126,7 @@ def rank_query(query_id: str, k: int = 5) -> dict[str, object]:
 
     return {
         "query_id": query_id,
+        "selected_model": load_metrics()["selected_model"],
         "results": constrained_rows,
         "freshness_constraint": freshness_constraint,
     }

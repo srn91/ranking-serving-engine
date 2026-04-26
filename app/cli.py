@@ -2,17 +2,28 @@ from __future__ import annotations
 
 import json
 
+from app.reporting import load_report
 from app.service import load_metrics
 from app.training import train_and_package
 
 
 def train() -> None:
-    metrics = train_and_package()
-    print(json.dumps({"metrics": metrics}, indent=2))
+    results = train_and_package()
+    print(json.dumps(results, indent=2))
 
 
 def evaluate() -> None:
-    print(json.dumps({"metrics": load_metrics()}, indent=2))
+    metadata = load_metrics()
+    print(
+        json.dumps(
+            {
+                "experiment": metadata["experiment"],
+                "selected_model": metadata["selected_model"],
+                "report": load_report(),
+            },
+            indent=2,
+        )
+    )
 
 
 def main() -> None:

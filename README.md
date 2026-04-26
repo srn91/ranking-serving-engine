@@ -1,6 +1,6 @@
 # ranking-serving-engine
 
-A local-first ranking system that generates query-item candidates, trains a feature-based scorer, evaluates relevance quality with ranking metrics, and serves top-k results through a FastAPI endpoint.
+A local-first ranking system that generates query-item candidates, compares two ranking models, records experiment metadata and a comparison report, and serves top-k results through a FastAPI endpoint.
 
 ## Problem
 
@@ -8,23 +8,25 @@ Recommendation and search systems are not just "train a model and hope." A credi
 
 ## Architecture
 
-The V1 implementation keeps the stack laptop-runnable while still reflecting a real serving shape:
+The current implementation keeps the stack laptop-runnable while still reflecting a real serving shape:
 
 - deterministic synthetic query-item candidates simulate a personalization workload
 - a feature pipeline computes affinity, freshness, price fit, and popularity signals per candidate
-- a gradient-boosted rank scorer is trained on query-grouped relevance labels
-- offline evaluation computes NDCG@5 and MAP@5 on held-out queries
-- a serving layer loads trained artifacts and returns top-k ranked items for a query
+- two rankers are trained on the same query-grouped relevance labels and compared on the same validation set
+- offline evaluation computes NDCG@5 and MAP@5 for each model
+- a reporting layer writes experiment metadata, comparison JSON, and a Markdown summary
+- a serving layer loads the selected artifact and returns top-k ranked items for a query
 
 ## Pipeline Walkthrough
 
 The ranking path is split so the offline and online stories stay easy to reason about:
 
 1. `app/dataset.py` generates query-grouped candidates and labels.
-2. `app/training.py` fits the rank scorer and writes the artifact bundle.
-3. `app/evaluation.py` computes grouped ranking metrics from the saved predictions.
-4. `app/service.py` loads the registered model and ranks query items without retraining.
-5. `app/main.py` serves the health, query index, and `/rank/{query_id}` endpoints.
+2. `app/training.py` fits the candidate rankers, selects the winner, and writes the artifact bundle.
+3. `app/evaluation.py` computes grouped ranking metrics and the model comparison report.
+4. `app/reporting.py` writes the JSON and Markdown experiment outputs.
+5. `app/service.py` loads the selected model and ranks query items without retraining.
+6. `app/main.py` serves the health, query index, and `/rank/{query_id}` endpoints.
 
 The serving layer is intentionally artifact-backed and retraining-free. That keeps the request path predictable and makes it obvious where to add explicit latency instrumentation or caching later, rather than hiding those concerns inside the model code.
 
@@ -32,19 +34,22 @@ The serving layer is intentionally artifact-backed and retraining-free. That kee
 flowchart LR
     A["Synthetic query-item candidates"] --> B["Feature pipeline"]
     B --> C["Training dataset"]
-    C --> D["Gradient-boosted scorer"]
-    D --> E["Artifact registry"]
-    E --> F["Offline evaluation (NDCG / MAP)"]
-    E --> G["FastAPI ranking service"]
-    G --> H["/rank/{query_id} top-k response"]
+    C --> D["Gradient-boosted baseline"]
+    C --> E["Random forest challenger"]
+    D --> F["Offline evaluation (NDCG / MAP)"]
+    E --> F
+    F --> G["Experiment comparison report"]
+    G --> H["Artifact registry"]
+    H --> I["FastAPI ranking service"]
+    I --> J["/rank/{query_id} top-k response"]
 ```
 
 ## Tradeoffs
 
-This V1 makes three deliberate tradeoffs:
+This implementation makes three deliberate tradeoffs:
 
 1. The repo uses deterministic synthetic ranking data instead of a large behavioral log so the full workflow is reproducible locally.
-2. The scorer is a scikit-learn gradient boosting model rather than a heavier dedicated ranking library because local runnability matters more than squeezing a few extra points from V1.
+2. The scorers are scikit-learn regressors rather than a heavier dedicated ranking library because local runnability matters more than squeezing a few extra points from the demo.
 3. Serving uses artifact-backed in-memory ranking rather than Redis or a feature store so the repo stays focused on ranking logic and response shape before adding infrastructure depth.
 
 ## Repo Layout
@@ -56,6 +61,7 @@ ranking-serving-engine/
 │   ├── dataset.py
 │   ├── evaluation.py
 │   ├── main.py
+│   ├── reporting.py
 │   ├── service.py
 │   └── training.py
 ├── artifacts/
@@ -72,7 +78,7 @@ cd ranking-serving-engine
 python3 -m pip install -r requirements.txt
 ```
 
-### Train the Ranker
+### Train the Rankers
 
 ```bash
 make train
@@ -83,12 +89,16 @@ That produces:
 - `artifacts/model.joblib`
 - `artifacts/ranking_dataset.json`
 - `artifacts/metadata.json`
+- `artifacts/experiment_report.json`
+- `artifacts/experiment_report.md`
 
 ### Evaluate Ranking Quality
 
 ```bash
 make evaluate
 ```
+
+`make evaluate` prints the selected model plus the experiment comparison report without retraining.
 
 ### Start the Ranking API
 
@@ -124,6 +134,7 @@ The V1 repo currently verifies:
 - deterministic generation of grouped ranking candidates
 - artifact-backed training and serving with no hidden retraining in the API
 - offline NDCG@5 and MAP@5 computation on held-out queries
+- two ranking models compared on the same validation set with experiment metadata recorded to disk
 - top-k serving for known queries using the stored artifact package
 - a freshness-aware serving constraint can promote fresher candidates into top-k when the base scorer over-concentrates on stale results
 
@@ -131,18 +142,14 @@ The evaluation surface is intentionally inspectable:
 
 - NDCG@5 shows whether the top of the list is ordered correctly.
 - MAP@5 shows whether relevant items are surfaced early and consistently.
-- The `/rank/{query_id}` response includes the item score plus feature context so the ranking decision can be inspected instead of treated as a black box.
-
-Operational target:
-
-- keep the request path artifact-backed, in-process, and free of retraining
-- add explicit P50/P99 telemetry if you want to present published latency SLOs later
+- The `/health` response includes the selected model and experiment comparison summary.
+- The `/rank/{query_id}` response includes the selected model name, the item score, and feature context so the ranking decision can be inspected instead of treated as a black box.
 
 Current expected evaluation snapshot:
 
 - queries evaluated: `12`
-- NDCG@5: at least `0.93`
-- MAP@5: at least `0.88`
+- selected model is the one with the better NDCG@5, then MAP@5
+- NDCG@5 and MAP@5 are recorded per model in the experiment report
 - served query path returns ranked items with feature and score context
 - served top-k can include freshness-based promotions while still exposing the underlying model score
 
@@ -156,21 +163,21 @@ Local quality gates:
 
 ## Current Capabilities
 
-The V1 repo demonstrates:
+The current implementation demonstrates:
 
 - deterministic ranking candidate generation
-- feature-based scoring with gradient boosting
+- feature-based scoring with two compared ranking models
 - grouped offline ranking metrics
+- experiment metadata and report artifacts
 - artifact-backed top-k serving through FastAPI
 - explicit train/evaluate/serve separation so API behavior is reproducible
 - freshness-aware reranking constraints at serve time without retraining the model
 
-## Future Expansion
+## Next Steps
 
 Possible follow-on work outside the current shipped scope:
 
 1. replace synthetic labels with logged-click or impression-style training data
 2. add a lightweight cache or feature-store layer for serving features
-3. compare multiple ranking models and track experiment metadata
-4. add diversity constraints alongside freshness so the serving policy can balance both objectives
-5. log feedback events for future online-learning or retraining workflows
+3. add diversity constraints alongside freshness so the serving policy can balance both objectives
+4. log feedback events for future online-learning or retraining workflows
