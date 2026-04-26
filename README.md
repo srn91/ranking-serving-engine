@@ -102,6 +102,8 @@ Useful endpoints:
 - `http://127.0.0.1:8002/queries`
 - `http://127.0.0.1:8002/rank/query_0049?k=5`
 
+The served ranking response now includes a `freshness_constraint` block and a `served_score` per row so you can see when the request path promoted fresher candidates into the top-k window.
+
 ### Run the Full Quality Gate
 
 ```bash
@@ -123,6 +125,7 @@ The V1 repo currently verifies:
 - artifact-backed training and serving with no hidden retraining in the API
 - offline NDCG@5 and MAP@5 computation on held-out queries
 - top-k serving for known queries using the stored artifact package
+- a freshness-aware serving constraint can promote fresher candidates into top-k when the base scorer over-concentrates on stale results
 
 Evaluation is purpose-built for a hiring review:
 
@@ -141,6 +144,7 @@ Current expected evaluation snapshot:
 - NDCG@5: at least `0.93`
 - MAP@5: at least `0.88`
 - served query path returns ranked items with feature and score context
+- served top-k can include freshness-based promotions while still exposing the underlying model score
 
 Local quality gates:
 
@@ -159,6 +163,7 @@ The V1 repo demonstrates:
 - grouped offline ranking metrics
 - artifact-backed top-k serving through FastAPI
 - explicit train/evaluate/serve separation so API behavior is reproducible
+- freshness-aware reranking constraints at serve time without retraining the model
 
 ## Next Steps
 
@@ -167,5 +172,5 @@ Realistic follow-up work for the next milestone:
 1. replace synthetic labels with logged-click or impression-style training data
 2. add a lightweight cache or feature-store layer for serving features
 3. compare multiple ranking models and track experiment metadata
-4. add diversity or freshness-aware reranking constraints
+4. add diversity constraints alongside freshness so the serving policy can balance both objectives
 5. log feedback events for future online-learning or retraining workflows
