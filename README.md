@@ -3,9 +3,9 @@
 A local-first ranking system that generates query-item candidates, compares two ranking models, records experiment metadata and a comparison report, and serves top-k results through a FastAPI endpoint.
 
 
-## Proof Snapshot
+## Results
 
-| Signal | Current evidence |
+| Area | Details |
 |---|---|
 | Ranking task | Current evaluation covers `12` query groups with grouped offline ranking metrics. |
 | Model comparison | Two rankers are trained on the same validation set and selected by NDCG@5, then MAP@5. |
@@ -13,7 +13,7 @@ A local-first ranking system that generates query-item candidates, compares two 
 | Explainability | Served results include model name, item score, and feature context for each ranked item. |
 | Deployment proof | Hosted smoke tests returned `200` for `/queries` and `/rank/query_0049?k=5`. |
 
-## What This Proves
+## Overview
 
 - Ranking is treated as an end-to-end system: features, offline evaluation, artifact selection, and top-k serving.
 - The service exposes score and feature context so ranking decisions are inspectable.
