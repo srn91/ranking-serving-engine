@@ -178,7 +178,7 @@ Local quality gates:
 - `make evaluate`
 - `make verify`
 
-## Current Capabilities
+## Capabilities
 
 The current implementation demonstrates:
 
