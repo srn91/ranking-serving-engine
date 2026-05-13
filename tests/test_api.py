@@ -11,6 +11,10 @@ def test_rank_endpoint_returns_top_k_results() -> None:
     train_and_package()
     client = TestClient(app)
 
+    index = client.get("/")
+    assert index.status_code == 200
+    assert index.json()["endpoints"]["example_rank"] == "/rank/query_0049?k=5"
+
     response = client.get("/rank/query_0049?k=3")
 
     assert response.status_code == 200

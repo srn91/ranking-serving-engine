@@ -31,6 +31,22 @@ def health() -> dict[str, object]:
     }
 
 
+@app.get("/")
+def index() -> dict[str, object]:
+    metadata = load_metrics()
+    return {
+        "project": "ranking-serving-engine",
+        "status": "ready",
+        "selected_model": metadata["selected_model"],
+        "endpoints": {
+            "health": "/health",
+            "queries": "/queries",
+            "example_rank": "/rank/query_0049?k=5",
+            "docs": "/docs",
+        },
+    }
+
+
 @app.get("/queries")
 def queries() -> dict[str, list[str]]:
     unique_queries = sorted({row["query_id"] for row in load_validation_rows()})
