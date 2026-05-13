@@ -2,6 +2,23 @@
 
 A local-first ranking system that generates query-item candidates, compares two ranking models, records experiment metadata and a comparison report, and serves top-k results through a FastAPI endpoint.
 
+
+## Proof Snapshot
+
+| Signal | Current evidence |
+|---|---|
+| Ranking task | Current evaluation covers `12` query groups with grouped offline ranking metrics. |
+| Model comparison | Two rankers are trained on the same validation set and selected by NDCG@5, then MAP@5. |
+| Artifact-backed serving | `/rank/{query_id}` loads the selected artifact without hidden retraining in the API path. |
+| Explainability | Served results include model name, item score, and feature context for each ranked item. |
+| Deployment proof | Hosted smoke tests returned `200` for `/queries` and `/rank/query_0049?k=5`. |
+
+## What This Proves
+
+- Ranking is treated as an end-to-end system: features, offline evaluation, artifact selection, and top-k serving.
+- The service exposes score and feature context so ranking decisions are inspectable.
+- The evidence maps to ML Engineer, Ranking Engineer, Search/Relevance, and recommendation-serving roles.
+
 ## Problem
 
 Recommendation and search systems are not just "train a model and hope." A credible ranking stack needs candidate features, a reproducible offline evaluation path, an artifact-backed serving layer, and a clean way to inspect what the top-k API is actually doing. This repo focuses on that end-to-end ranking workflow.
