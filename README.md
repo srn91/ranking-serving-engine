@@ -17,7 +17,7 @@ A local-first ranking system that generates query-item candidates, compares two 
 
 - Ranking is treated as an end-to-end system: features, offline evaluation, artifact selection, and top-k serving.
 - The service exposes score and feature context so ranking decisions are inspectable.
-- The evidence maps to ML Engineer, Ranking Engineer, Search/Relevance, and recommendation-serving roles.
+- The implementation combines feature preparation, model comparison, ranking evaluation, artifact selection, and top-k serving.
 
 ## Problem
 
