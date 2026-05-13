@@ -11,7 +11,7 @@ A local-first ranking system that generates query-item candidates, compares two 
 | Model comparison | Two rankers are trained on the same validation set and selected by NDCG@5, then MAP@5. |
 | Artifact-backed serving | `/rank/{query_id}` loads the selected artifact without hidden retraining in the API path. |
 | Explainability | Served results include model name, item score, and feature context for each ranked item. |
-| Deployment proof | Hosted smoke tests returned `200` for `/queries` and `/rank/query_0049?k=5`. |
+| Deployment | Hosted smoke tests returned `200` for `/queries` and `/rank/query_0049?k=5`. |
 
 ## Overview
 
