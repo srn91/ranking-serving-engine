@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 
 from app.service import ensure_artifacts_exist, load_metrics, load_validation_rows, rank_query
 
@@ -31,20 +32,27 @@ def health() -> dict[str, object]:
     }
 
 
-@app.get("/")
-def index() -> dict[str, object]:
+@app.get("/", response_class=HTMLResponse)
+def index() -> str:
     metadata = load_metrics()
-    return {
-        "project": "ranking-serving-engine",
-        "status": "ready",
-        "selected_model": metadata["selected_model"],
-        "endpoints": {
-            "health": "/health",
-            "queries": "/queries",
-            "example_rank": "/rank/query_0049?k=5",
-            "docs": "/docs",
-        },
-    }
+    selected_model = metadata["selected_model"]
+    return f"""<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranking Serving Engine</title>
+<style>body{{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:860px;margin:48px auto;padding:0 24px;line-height:1.5;color:#111}}a{{color:#0645ad}}</style></head>
+<body>
+<h1>Ranking Serving Engine</h1>
+<p>Artifact-backed ranking service with held-out evaluation, model comparison, query-item features, and top-k serving.</p>
+<ul><li>Selected model: {selected_model}</li></ul>
+<h2>Open endpoints</h2>
+<ul>
+<li><a href="/rank/query_0049?k=5">Sample top-k ranking</a></li>
+<li><a href="/queries">Validation query IDs</a></li>
+<li><a href="/health">Health check</a></li>
+<li><a href="/docs">API docs</a></li>
+</ul>
+</body></html>"""
 
 
 @app.get("/queries")

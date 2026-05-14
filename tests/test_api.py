@@ -13,7 +13,9 @@ def test_rank_endpoint_returns_top_k_results() -> None:
 
     index = client.get("/")
     assert index.status_code == 200
-    assert index.json()["endpoints"]["example_rank"] == "/rank/query_0049?k=5"
+    assert "text/html" in index.headers["content-type"]
+    assert "Ranking Serving Engine" in index.text
+    assert "/rank/query_0049?k=5" in index.text
 
     response = client.get("/rank/query_0049?k=3")
 
