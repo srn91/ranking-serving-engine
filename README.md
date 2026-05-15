@@ -2,6 +2,8 @@
 
 A local-first ranking system that generates query-item candidates, compares two ranking models, records experiment metadata and a comparison report, and serves top-k results through a FastAPI endpoint.
 
+**System type:** Production-style engineering system  
+**System brief:** [docs/system-brief.md](docs/system-brief.md)
 
 ## Results
 
